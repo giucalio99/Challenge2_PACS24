@@ -4,6 +4,8 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <functional>
+
 namespace algebra{
 
     //enumerator that indicates the storage ordering
@@ -15,6 +17,8 @@ namespace algebra{
     template <class T>
     using ElemType = std::map<std::array<std::size_t,2>,T>;
 
+
+
     //declare the template classe Matrix with partial specialization for the ordering
     template <class T, StorageOrder Order=StorageOrder::RowWise>
     class Matrix {
@@ -22,8 +26,9 @@ namespace algebra{
         private:
         
         ElemType<T> m_data; //map that stores the values
-        size_t m_nnz; // number of elements of the map
-        size_t m_m; // number of non empy columns/rows
+        std::size_t m_nnz; // number of elements of the map
+        std::size_t m_m; // number of non empy columns/rows
+        T m_value;
         std::array<std::size_t,2> m_size; // size of the matrix
         bool m_state; // true if compressed
 
@@ -64,6 +69,8 @@ namespace algebra{
          * @param outer_index vector containing the indeces of the colums/rows on the non-zero elements
          * @param inner_index vector containing the index indicating in the other vector where a new row/column starts
          */
+
+    
         // Compress method
         void 
         compress(std::vector<T>   &val,
@@ -74,15 +81,38 @@ namespace algebra{
         // const and non const version of the call operator
         // inline const T &operator()(unsigned int i, unsigned int j){
         //}
-        inline T &operator()(unsigned int i, unsigned int j){
+        inline T& operator()(unsigned int i, unsigned int j){
             std::array<std::size_t,2> key={i,j};  
+            std::cout<<"non const"<<std::endl;
+            //m_data.insert(key,m_value);
+            //return m_data[key];
             return m_data[key];
+        }
+        inline const T operator()(unsigned int i, unsigned int j) const{
+            std::array<std::size_t,2> key={i,j};  
+            std::cout<<"const"<<std::endl;
+            return m_data.at(key);
         }
         //Streaming operator overloading
         template<class U, StorageOrder order>
         friend std::ostream& operator<<(std::ostream& out, const Matrix<U, order>& A);
 
+        template<class U, StorageOrder order>
+        friend std::vector<U> operator*(const Matrix<U, order> &A,const std::vector<U> &b);
 
+        template<class U,algebra::StorageOrder order>
+        struct std::less<algebra::ElemType<U>>{
+        bool operator()(algebra::ElemType<U> &lhs, algebra::ElemType<U> &rhs){
+        bool comp;
+        // lhs<rhs
+        if (order==algebra::StorageOrder::ColWise){
+            comp=(lhs.first[1] < rhs.first[1]) || (lhs.first[1] == rhs.first[1] && lhs.first[0] < rhs.first[0])
+        }else{
+            comp=std::lexicographical_compare(lhs,rhs);
+        }
+        return comp;
+        }
+};
     }; 
 // include the implementation
 #include "Matrix_impl.hpp"

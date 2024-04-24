@@ -36,7 +36,8 @@ int main()
     //col=A.size()[1];
     //std::cout<<row<<" "<<col<<std::endl;
     A(0,0)=7;
-    std::cout<<A(0,0)<<"\n";
+    double a=A(1,3);
+    std::cout<<a<<"\n";
     A(0,0)=12;
     std::cout<<A(0,0)<<"\n";
     //std::cout<<A(2,3)<<"\n";
@@ -50,7 +51,6 @@ int main()
 
     
     A.compress(val, col_ind, row_ptr);
-
   std::cout << "CSR vectors:" << std::endl;
   for (auto i : val)
     std::cout << i << " ";
@@ -87,7 +87,12 @@ int main()
     
     A.compress(val2, col_ind2, row_ptr2);
 
+    std::vector<double> b{3.0,4.0,2.0,7.0};
+    std::vector<double> prod=A*b;
 
+    for (auto it=prod.begin();it!=prod.end();++it){
+      std::cout<<*it<<std::endl;
+    }
   
   
   
