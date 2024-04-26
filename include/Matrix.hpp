@@ -13,11 +13,28 @@ namespace algebra{
         RowWise,
         ColWise
     };
+
+    using Indices = std::array<std::size_t, 2>;
+
+    template<StorageOrder order>
+    struct CustomCompare{
+    };
+    template<>
+    struct CustomCompare<StorageOrder::RowWise>{
+        bool operator()(const Indices& a, const Indices& b) const{
+            return (a[0] < b[0] || (a[0] == b[0] && a[1] < b[1])); // come passare quello di default??
+        }
+    };
+    template<>
+        struct CustomCompare<StorageOrder::ColWise>{
+        bool operator()(const Indices& a, const Indices& b) const{
+            return (a[1] < b[1] || (a[1] == b[1] && a[0] < b[0]));
+        }
+    };
+
     // create a type: in COOmap format each elemet is mapped by to integer to which correspond a values
-    template <class T>
-    using ElemType = std::map<std::array<std::size_t,2>,T>;
-
-
+    template <class T, StorageOrder Order>
+    using ElemType = std::map<Indices,T, CustomCompare<Order>>;
 
     //declare the template classe Matrix with partial specialization for the ordering
     template <class T, StorageOrder Order=StorageOrder::RowWise>
@@ -25,7 +42,7 @@ namespace algebra{
         
         private:
         
-        ElemType<T> m_data; //map that stores the values
+        ElemType<T, Order> m_data; //map that stores the values
         std::size_t m_nnz; // number of elements of the map
         std::size_t m_m; // number of non empy columns/rows
         T m_value;
@@ -100,6 +117,7 @@ namespace algebra{
         template<class U, StorageOrder order>
         friend std::vector<U> operator*(const Matrix<U, order> &A,const std::vector<U> &b);
 
+        /*
         template<class U,algebra::StorageOrder order>
         struct std::less<algebra::ElemType<U>>{
         bool operator()(algebra::ElemType<U> &lhs, algebra::ElemType<U> &rhs){
@@ -110,10 +128,9 @@ namespace algebra{
         }else{
             comp=std::lexicographical_compare(lhs,rhs);
         }
-        return comp;
-        }
-};
-    }; 
+        return comp;*/
+    };
+
 // include the implementation
 #include "Matrix_impl.hpp"
 //extern template std::ostream& operator<<(std::ostream& out, const Matrix<double, StorageOrder::RowWise>& A);

@@ -96,8 +96,8 @@ Matrix<T, Order>::compress(std::vector<T>           &val,
     }
     for (auto [key, value] : m_data)
     {
-        std::cout<<"key:" <<key[0]<<" "<<key[1]<<std::endl;
-        std::cout<<"values:"<<value<<std::endl;
+        //std::cout<<"key:" <<key[0]<<" "<<key[1]<<std::endl;
+        //std::cout<<"values:"<<value<<std::endl;
         val.emplace_back(value);
 
         outer_index.emplace_back(key[i]);
@@ -149,7 +149,7 @@ std::vector<T> operator*(const Matrix<T, Order> &A, const std::vector<T> &b){
     }
     }else if(Order==StorageOrder::ColWise){
     auto max=std::max_element(A.m_outer_index.begin(), A.m_outer_index.end());
-    output.resize(*max+1);
+    output.reserve(static_cast<int>(*max)+1);
     for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
         for(unsigned int j = A.m_inner_index[i]; j<A.m_inner_index[i+1]; ++j){
            output[A.m_outer_index[j]]+= A.m_val[j] * b[i];
