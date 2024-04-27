@@ -5,7 +5,8 @@
 #include <vector>
 #include <iostream>
 #include <functional>
-
+#include <algorithm>
+#include <execution>
 namespace algebra{
 
     //enumerator that indicates the storage ordering
@@ -55,7 +56,8 @@ namespace algebra{
         std::vector<unsigned int> m_inner_index;
 
         public:
-        Matrix()=default;
+        //Matrix()=default;
+        Matrix();
         Matrix(unsigned int i, unsigned int j); // constuctor that takes the size of the matrix
         
         // return the size of the matrix

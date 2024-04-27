@@ -4,13 +4,13 @@
 #include "Matrix.hpp"
 
 using namespace algebra;
-/*
+
 //Constructor
 template <class T, StorageOrder Order>
 Matrix<T, Order>::Matrix():
 m_size{0}
 {}
-*/
+
 template <class T, StorageOrder Order>
 Matrix<T, Order>::Matrix(unsigned int i, unsigned int j)
 {
@@ -27,11 +27,8 @@ Matrix<T, Order>::resize(unsigned int i, unsigned int j){
    {
         uncompress();
    }
-    if (Order== StorageOrder::RowWise)
-    {
-        m_size[0]=i;
-        m_size[1]=j;
-    }
+    m_size[0]=i;
+    m_size[1]=j;
 }
 template<class T, StorageOrder Order>
 void
@@ -63,9 +60,9 @@ Matrix<T, Order>::update_properties()
     m_m=0;
 
     auto it=m_data.rbegin();
-    if (Order==StorageOrder::RowWise){
+    if constexpr(Order==StorageOrder::RowWise){
         m_m=it->first[0]+1;
-    }else if(Order==StorageOrder::ColWise){
+    }else if constexpr(Order==StorageOrder::ColWise){
         m_m=it->first[1]+1;
     }
     m_nnz=m_data.size(); //use the size of the map to retrieve the number of elements 
@@ -87,10 +84,10 @@ Matrix<T, Order>::compress(std::vector<T>           &val,
     inner_index.emplace_back(0);
     unsigned int temp_idx{0}, key_old{0};
     int i, j;
-    if(Order==StorageOrder::RowWise){
+    if constexpr(Order==StorageOrder::RowWise){
         i=1;
         j=0;
-    }else if (Order==StorageOrder::ColWise){
+    }else if constexpr(Order==StorageOrder::ColWise){
         i=0;
         j=1;
     }
@@ -132,12 +129,17 @@ std::ostream& operator<<(std::ostream& out, const Matrix<T, Order>& A)
 template<class T, StorageOrder Order>
 std::vector<T> operator*(const Matrix<T, Order> &A, const std::vector<T> &b){
 
-
+    //std::vector<T> val, outer_index, inner_index;
     //if(!A.is_compressed()){
-    //    A.compress(A.m_val, A.m_outer_index, A.m_inner_index);
+      //  std::cerr<<"Please compress the matrix "
+        //A.compress(val, outer_index, inner_index);
     //}
+    //else{
+        //A.update_properties();
+    //}
+
     std::vector<T> output;
-    if(Order==StorageOrder::RowWise){
+    if constexpr(Order==StorageOrder::RowWise){
     T temp;
     output.reserve(A.m_inner_index.size()-1);
     for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
@@ -147,16 +149,20 @@ std::vector<T> operator*(const Matrix<T, Order> &A, const std::vector<T> &b){
         }
         output.emplace_back(temp);
     }
-    }else if(Order==StorageOrder::ColWise){
-    auto max=std::max_element(A.m_outer_index.begin(), A.m_outer_index.end());
-    output.reserve(static_cast<int>(*max)+1);
+    }else if constexpr(Order==StorageOrder::ColWise){
+        auto max=std::max_element(A.m_outer_index.begin(), A.m_outer_index.end());
+     
+    std::vector<T> temp(static_cast<int>(*max)+1,0);
     for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
         for(unsigned int j = A.m_inner_index[i]; j<A.m_inner_index[i+1]; ++j){
-           output[A.m_outer_index[j]]+= A.m_val[j] * b[i];
+            temp[A.m_outer_index[j]]+= A.m_val[j] * b[i];
         }
+        
     }
+    std::copy(std::execution::par,temp.begin(), temp.end(), std::back_inserter(output));
+
     }
-    
+    output.shrink_to_fit();
     return output;
     
 }
