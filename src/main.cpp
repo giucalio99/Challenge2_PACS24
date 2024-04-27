@@ -13,6 +13,7 @@
 #include <map>
 #include <array>
 #include <vector>
+#include <utility>
 int main()
 {
     using namespace algebra;
@@ -77,54 +78,52 @@ int main()
   }
 
   
-    A.uncompress();
-    if(!A.is_compressed()){
-      std::cout<<"non è compressa"<<std::endl;
-    }
-    std::vector<double>       val2;
-    std::vector<unsigned int> col_ind2, row_ptr2;
+  A.uncompress();
+  if(!A.is_compressed()){
+    std::cout<<"non è compressa"<<std::endl;
+  }
+  std::vector<double>       val2;
+  std::vector<unsigned int> col_ind2, row_ptr2;
 
     
-    A.compress(val2, col_ind2, row_ptr2);
+  A.compress(val2, col_ind2, row_ptr2);
 
-    std::vector<double> b{3.0,4.0,2.0,7.0};
-    std::vector<double> prod=A*b;
+  std::vector<double> b{3.0,4.0,2.0,7.0};
+  std::vector<double> prod=A*b;
 
-    for (auto it=prod.begin();it!=prod.end();++it){
-      std::cout<<*it<<std::endl;
-    }
+  auto it=prod.end();
+  std::cout<<"test:"<<*(it-1)<<std::endl;  
+  for (auto it=prod.begin();it!=prod.end();++it){
+    std::cout<<*it<<std::endl;
+  }
   
-    const StorageOrder order=StorageOrder::ColWise;
-    Matrix<double, order> B;
-    for (unsigned int i = 0; i < n; ++i)
+  const StorageOrder order=StorageOrder::ColWise;
+  Matrix<double, order> B;
+  for (unsigned int i = 0; i < n; ++i)
     {
-      if (i > 0)
+      if (i > 0){
         B(i,i-1)= -1;
-
-      if (i < n - 1)
+      }
+      if (i < n - 1){
         B(i,i+1) = -1;
-
+      }
       B(i,i) = 4;
     }
-    std::vector<double> b2{1.0,2.0,3.0,4.0};
-    std::cout<<"prodotto inizia qui"<<std::endl;
-    std::vector<double>       val3;
-    std::vector<unsigned int> col_ind3, row_ptr3;
-    B.compress(val3,col_ind3,row_ptr3);
-    std::vector<double> prod2=B*b2;
+  std::vector<double> b2{1.0,2.0,3.0,4.0};
+  std::vector<double>       val3;
+  std::vector<unsigned int> outer,inner;
+  B.compress(val3,outer,inner);
+  std::cout << "Matrix entries from CSC:" << std::endl;
+  for (unsigned int i = 0; i < n; ++i)
+    for (unsigned int j = inner[i]; j < inner[i + 1]; ++j)
+      std::cout << "A[" << outer[j] << "][" << i << "] = " << val3[j]
+                << std::endl;
+  std::vector<double> prod2=B*b2;
 
 
-std::cout<<prod2[0]<<std::endl;
-std::cout<<prod2[1]<<std::endl;
-std::cout<<prod2[2]<<std::endl;
-std::cout<<prod2[3]<<std::endl;
-int j{0};
-    for (auto ite=prod2.begin();ite!=prod2.end();++ite){
-      std::cout<<*ite<<std::endl;
-    std::cout<<j<<std::endl;
-    ++j;
-    }
+  for (auto ite=prod2.begin();ite!=prod2.end();++ite){
+    std::cout<<*ite<<std::endl;
+  }
   
-  
-   return 0;
+  return 0;
 }
