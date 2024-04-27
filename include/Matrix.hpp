@@ -7,6 +7,7 @@
 #include <functional>
 #include <algorithm>
 #include <ranges>
+
 namespace algebra{
 
     //enumerator that indicates the storage ordering

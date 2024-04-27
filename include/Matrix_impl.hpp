@@ -161,6 +161,7 @@ std::vector<T> operator*(const Matrix<T, Order> &A, const std::vector<T> &b){
     }
     std::ranges::copy(temp.begin(), temp.end(), std::back_inserter(output));
 
+
     }
     output.shrink_to_fit();
     return output;
