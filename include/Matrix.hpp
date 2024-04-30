@@ -7,6 +7,8 @@
 #include <functional>
 #include <algorithm>
 #include <ranges>
+#include <sstream>
+#include <fstream>
 
 namespace algebra{
     
@@ -184,6 +186,9 @@ namespace algebra{
         void 
         erase(unsigned int i, unsigned int j);
 
+        
+        bool
+        read_market_matrix(const std::string& filename);
         /**
          * @brief the call operator() must be used for inserting values in a key={i,j}
          * 
@@ -193,11 +198,10 @@ namespace algebra{
          */
         inline T& operator()(unsigned int i, unsigned int j){
 
-            Indices key={i,j};  
-            std::cout<<"non const"<<std::endl;
+            Indices key={i,j}; 
             auto it=m_data.find(key);
             if(it != m_data.end()){//true if the key is already present
-                std::cerr<<"Warning: Matrix is uncompressed: modyfing existing element."<<std::endl;
+                std::cerr<<"\n Warning: Matrix is uncompressed: modyfing existing element."<<std::endl;
                return m_data[key];
             }else{ //if the key is not present
                 if(!m_state){
@@ -213,6 +217,14 @@ namespace algebra{
         friend std::ostream& 
         operator<<(std::ostream& out, const Matrix<U, order>& A);
 
+        /**
+         * @brief Matrix-vector product. Matrix can be compressed or uncompressed. 
+         *  If uncompressed, resize is compulsory
+         * 
+         * @param A Matrix(compressed or uncompressed)
+         * @param b vector
+         * @return template<class U, StorageOrder order> 
+         */
         //operator* overloading
         template<class U, StorageOrder order>
         friend std::vector<U> 

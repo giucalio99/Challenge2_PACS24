@@ -4,11 +4,9 @@ CXXFLAGS ?= -std=c++20
 CPPFLAGS ?= -O3 -Wall -I./include -Wno-conversion-null -Wno-deprecated-declarations 
 SOURCE_DIR=./src/
 VPATH=$(SOURCE_DIR)
-#include $(SRCS_DIR)/*.cpp
-#SRCS= $(wildcard *.cpp)
 SRCS=$(join $(dir $(SOURCE_DIR)),$(notdir *.cpp))
 OBJS= $(SRCS:%.cpp=%.o)
-#OBJS=main.o
+
 EXEC= main
 .phony= clean 
 .DEFAULT_GOAL = all

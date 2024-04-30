@@ -137,8 +137,10 @@ Matrix<T, Order>::at(unsigned int i, unsigned int j) const{
         return m_data.at(key); 
     }else{
         std::cerr<<"WARNING! Read the matrix."<<std::endl;
-        std::cerr<<"key: [ "<<key[0]<<", "<<key[1]<<" ]"<<std::endl;
         std::cerr<<"No control on dimenstion: check bounds"<<std::endl;
+        std::cerr<<"key: [ "<<key[0]<<", "<<key[1]<<" ]"<<std::endl;
+        std::cerr<<"Value: ";
+        
         return 0.0;
     }
 }
@@ -149,16 +151,63 @@ Matrix<T,Order>::erase(unsigned int i, unsigned int j){
     if(!m_state){
         m_data.erase(key);
         }else{
-            std::cerr<<"Wartning. Trying to delete an element in compressed state."<<std::endl;
+            std::cerr<<"Warning. Trying to delete an element in compressed state."<<std::endl;
             std::cerr<<"No changes. Pass to the uncompressed state before."<<std::endl;
         }
+}
+
+template<class T, StorageOrder Order>
+bool Matrix<T, Order>::read_market_matrix(const std::string& filename){
+    std::ifstream file(filename);
+    if(!file.is_open()){
+        std::cerr << "WARNING! Error while opening the file in Matrix Market format!"<<std::endl;
+        return false;
+    }
+    std::string line;
+    std::getline(file, line);
+    if(line.find("%%MatrixMarket")== std::string::npos){
+        std::cerr<<"The file is not in Matrix Market format"<<std::endl;
+        return false;
+    }
+    while(std::getline(file, line) and line[0]=='%');
+    std::istringstream iss(line);
+    iss>>m_size[0]>>m_size[1];
+
+    unsigned int row, col;
+    T value;
+    while(file>>row>>col>>value){
+        Indices key{row-1, col-1};
+        m_data.insert({{key, value}});
+
+    }
+    file.close();
+    return true;
 }
 
 //Overloading streaming operator
 template <class T, StorageOrder Order>
 std::ostream& operator<<(std::ostream& out, const Matrix<T, Order>& A)
 {
-    out<<A.m_data->second <<std::endl;
+    if(!A.m_state){
+        std::cout << "Printing a non compressed matrix" << std::endl;
+        for (const auto& pair : A.m_data) {
+            out << "[" << pair.first[0] << ", " << pair.first[1] << "]: " << pair.second << "\n";
+        }
+    }
+    else{
+        if constexpr(Order==StorageOrder::RowWise){
+            std::cout << "Printing a CSR matrix" << std::endl;
+            for (unsigned int i = 0; i < A.m_inner_index.size()-1; ++i)
+                for (unsigned int k = A.m_inner_index[i]; k < A.m_inner_index[i + 1]; ++k)
+                    out << "[" << i << ", " << A.m_outer_index[k] << "] = " << A.m_val[k] << "\n";
+        }
+        else if constexpr(Order==StorageOrder::ColWise){
+            std::cout << "Printing a CSC matrix" << std::endl;
+            for (unsigned int i = 0; i < A.m_inner_index.size()-1; ++i)
+                for (unsigned int k = A.m_inner_index[i]; k < A.m_inner_index[i + 1]; ++k)
+                    out << "[" << A.m_outer_index[k] << ", " << i << "] = " << A.m_val[k] << "\n";
+        }
+    }
     return out;
 }
 
@@ -176,31 +225,45 @@ std::vector<T> operator*(const Matrix<T, Order> &A, const std::vector<T> &b){
     //}
 
     std::vector<T> output;
-    if constexpr(Order==StorageOrder::RowWise){
-    T temp;
-    output.reserve(A.m_inner_index.size()-1);
-    for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
-        temp = 0.0;
-        for(unsigned int j = A.m_inner_index[i]; j<A.m_inner_index[i+1]; ++j){
-            temp += A.m_val[j] * b[A.m_outer_index[j]];
-        }
-        output.emplace_back(temp);
-    }
-    }else if constexpr(Order==StorageOrder::ColWise){
-        auto max=std::max_element(A.m_outer_index.begin(), A.m_outer_index.end());
-     
-    std::vector<T> temp(static_cast<int>(*max)+1,0);
-    for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
-        for(unsigned int j = A.m_inner_index[i]; j<A.m_inner_index[i+1]; ++j){
-            temp[A.m_outer_index[j]]+= A.m_val[j] * b[i];
-        }
-        
-    }
-    std::ranges::copy(temp.begin(), temp.end(), std::back_inserter(output));
+    if(A.m_state){
+        if constexpr(Order==StorageOrder::RowWise){
+            T temp;
+            output.reserve(A.m_inner_index.size()-1);
+            for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
+                temp = 0.0;
+                for(unsigned int j = A.m_inner_index[i]; j<A.m_inner_index[i+1]; ++j){
+                    temp += A.m_val[j] * b[A.m_outer_index[j]];
+                }
+                output.emplace_back(temp);
+            }
+            //std::cout<<output[120]<<std::endl;
+        }else if constexpr(Order==StorageOrder::ColWise){
+            auto max=std::max_element(A.m_outer_index.begin(), A.m_outer_index.end());
+            std::vector<T> temp(static_cast<int>(*max)+1,0);
+            for(unsigned int i = 0; i < A.m_inner_index.size()-1; ++i){
+                for(unsigned int j = A.m_inner_index[i]; j<A.m_inner_index[i+1]; ++j){
+                    temp[A.m_outer_index[j]]+= A.m_val[j] * b[i];
+                }
+            }
+            std::ranges::copy(temp.begin(), temp.end(), std::back_inserter(output));
 
+        }
+    }else{
+        if(A.m_size[0]==0){
+            std::cerr<<"ERROR: Resize is compulsory if the matrix is uncompressed"<<std::endl;
+        }
+        std::vector<T> temp(A.m_size[0],0);
 
+        for (auto [key, value] : A.m_data){
+            temp[key[0]]+=value*b[key[1]];
+        }
+        std::ranges::copy(temp.begin(), temp.end(), std::back_inserter(output));
     }
+  
+
+    
     output.shrink_to_fit();
+    
     return output;
     
 }
