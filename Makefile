@@ -24,3 +24,4 @@ clean:
 	$(RM) *.o
 	$(RM) $(OBJS)
 	$(RM) $(EXEC)
+	$(RM) -r ./doc/html ./doc/latex

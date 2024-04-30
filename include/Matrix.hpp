@@ -9,26 +9,51 @@
 #include <ranges>
 
 namespace algebra{
-
-    //enumerator that indicates the storage ordering
+    
+    /**
+     * @brief //enumerator that indicates the storage ordering
+     * 
+     */
     enum class StorageOrder{
         RowWise,
         ColWise
     };
 
+    // type alias for the key of the map
+    // key is something of the type (i,j) where i is the row index, while j the column one.
     using Indices = std::array<std::size_t, 2>;
 
+    /**
+     * @brief functor to specify the ordering relation of the map
+     * 
+     * @tparam order (row-major or column-major)
+     */
     template<StorageOrder order>
     struct CustomCompare{
     };
+
+    /**
+     * @brief Specialization of CustonCompare in case of row-major ordering
+     * 
+     * @tparam  
+     */
     template<>
     struct CustomCompare<StorageOrder::RowWise>{
+        // In this case I will use the default comparison provided by std::less<T>
         bool operator()(const Indices& a, const Indices& b) const{
-            return (a[0] < b[0] || (a[0] == b[0] && a[1] < b[1])); // come passare quello di default??
+         //   return (a[0] < b[0] || (a[0] == b[0] && a[1] < b[1])); // come passare quello di default??
+        std::less<Indices> less_than;
+        return less_than(a,b);
         }
     };
+    /**
+     * @brief Specialization of CustonCompare in case of column-major ordering
+     * 
+     * @tparam  
+     */
     template<>
         struct CustomCompare<StorageOrder::ColWise>{
+        // I need to change the ordering comparing the column indeces first
         bool operator()(const Indices& a, const Indices& b) const{
             return (a[1] < b[1] || (a[1] == b[1] && a[0] < b[0]));
         }
@@ -38,49 +63,93 @@ namespace algebra{
     template <class T, StorageOrder Order>
     using ElemType = std::map<Indices,T, CustomCompare<Order>>;
 
+    /**
+    * @brief Class to handle compressed and uncomprees sparse matrix format 
+    * 
+    */
     //declare the template classe Matrix with partial specialization for the ordering
     template <class T, StorageOrder Order=StorageOrder::RowWise>
     class Matrix {
         
         private:
+        //map that stores the values accordingly to the StorageOrder
+        ElemType<T, Order> m_data; 
         
-        ElemType<T, Order> m_data; //map that stores the values
-        std::size_t m_nnz; // number of elements of the map
-        std::size_t m_m; // number of non empy columns/rows
-        T m_value;
-        std::array<std::size_t,2> m_size; // size of the matrix
+        // number of non-zero elements of the map
+        std::size_t m_nnz;
+
+        // number of non empy rows (if row-major ordering) 
+        // or columns (if column-major ordering) 
+        std::size_t m_m; 
+        
+        // size of the matrix
+        // m_size[0] = number of rows
+        // m_size[1] = number of columns
+        std::array<std::size_t,2> m_size; 
+
+        // State of the matrix can be compressed (CSR or CSC) or uncompressed
         bool m_state; // true if compressed
 
-        //Vector to store the data of the matrix when compressed
+        //Vector that stores the data of the matrix when compressed
         std::vector<T>           m_val;
+        /*We store two vectors of indexes. The first (the inner indexes),
+        of length the number of rows plus one, contains the starting index for the elements of
+        each row. The second vector of indexes (the outer indexes), of length the number of non-
+        zeroes, contains the corresponding column index. Finally, we have a vector of values,
+        again of length the number of non-zeroes. To be more specific, the elements of row i are
+        stored in the elements of the vector of values in the interval inner(i) ≤ k < inner(i + 1)
+        (the interval is open on the right) and the corresponding column index is outer(k).
+        Using this scheme, we have a row-wise storage, since transversing the vector of values
+        provides the non-zero elements ”by row”.*/
         std::vector<unsigned int> m_outer_index;
         std::vector<unsigned int> m_inner_index;
 
         public:
-        //Matrix()=default;
+        //The default constructor
         Matrix();
-        Matrix(unsigned int i, unsigned int j); // constuctor that takes the size of the matrix
+        // constuctor that takes the size of the matrix
+        Matrix(unsigned int i, unsigned int j); 
         
-        // return the size of the matrix
-        inline std::array<std::size_t,2>  size() const{
+        /**
+         * @brief return the size of the matrix
+         * 
+         */
+        inline Indices
+        size() const{
             return m_size;
         }
-        //resize the matrix according given dimensions
-        void resize(unsigned int i, unsigned int j);
-
-        // 
-        void update_properties();
-        
-        //method to interrogate the state of the matrix (true if compressed)
-        inline bool is_compressed(){
+        /**
+         * @brief method to interrogate the state of the matrix (true if compressed)
+         * 
+         * @return true if compressed (CSR or CSC)
+         * @return false if uncompressed (COOmap format)
+         */
+        inline bool 
+        is_compressed(){
             return m_state;
         }
+        /**
+         * @brief resize the matrix according given dimensions 
+         * 
+         * @param i number of rows 
+         * @param j number of columns
+         */
+        
+        void 
+        resize(unsigned int i, unsigned int j);
+
+        // utility to update some private variables of the class
+        void 
+        update_properties();
+        
+
 
         /**
          * @brief The metod allows to uncompress a matrix from CSR/CSC to COOmap format
          * 
          */
-        void uncompress();
+        void 
+        uncompress();
 
         /**
          * @brief This method allows the compression from COOmap format to a compressed format
@@ -89,36 +158,65 @@ namespace algebra{
          * @param outer_index vector containing the indeces of the colums/rows on the non-zero elements
          * @param inner_index vector containing the index indicating in the other vector where a new row/column starts
          */
-
-    
-        // Compress method
         void 
         compress(std::vector<T>   &val,
         std::vector<unsigned int> &outer_index,
         std::vector<unsigned int> &inner_index);
 
 
-        // const and non const version of the call operator
-        // inline const T &operator()(unsigned int i, unsigned int j){
-        //}
+
+
+        /**
+         * @brief method to read the matrix provided a specific key
+         * 
+         * @param i  row index
+         * @param j column index
+         * @return const T read value
+         */
+        T at(unsigned int i, unsigned int j) const;
+
+        /**
+         * @brief delete an element previously inserted
+         * 
+         * @param i row index
+         * @param j columns index
+         */
+        void 
+        erase(unsigned int i, unsigned int j);
+
+        /**
+         * @brief the call operator() must be used for inserting values in a key={i,j}
+         * 
+         * @param i index of the row 
+         * @param j index of the columns
+         * @return T& value to be inserted
+         */
         inline T& operator()(unsigned int i, unsigned int j){
-            std::array<std::size_t,2> key={i,j};  
+
+            Indices key={i,j};  
             std::cout<<"non const"<<std::endl;
-            //m_data.insert(key,m_value);
-            //return m_data[key];
-            return m_data[key];
+            auto it=m_data.find(key);
+            if(it != m_data.end()){//true if the key is already present
+                std::cerr<<"Warning: Matrix is uncompressed: modyfing existing element."<<std::endl;
+               return m_data[key];
+            }else{ //if the key is not present
+                if(!m_state){
+                    return m_data[key];
+                }else{
+                    std::cerr<<"Warning:trying to add an element in compressed state. Aborting."<<std::endl;
+                }
+            }
         }
-        inline const T operator()(unsigned int i, unsigned int j) const{
-            std::array<std::size_t,2> key={i,j};  
-            std::cout<<"const"<<std::endl;
-            return m_data.at(key);
-        }
+
         //Streaming operator overloading
         template<class U, StorageOrder order>
-        friend std::ostream& operator<<(std::ostream& out, const Matrix<U, order>& A);
+        friend std::ostream& 
+        operator<<(std::ostream& out, const Matrix<U, order>& A);
 
+        //operator* overloading
         template<class U, StorageOrder order>
-        friend std::vector<U> operator*(const Matrix<U, order> &A,const std::vector<U> &b);
+        friend std::vector<U> 
+        operator*(const Matrix<U, order> &A,const std::vector<U> &b);
 
         /*
         template<class U,algebra::StorageOrder order>
@@ -138,8 +236,6 @@ namespace algebra{
 #include "Matrix_impl.hpp"
 //extern template std::ostream& operator<<(std::ostream& out, const Matrix<double, StorageOrder::RowWise>& A);
 }// namespace algebra
-
-
 
 
 #endif// HH_MATRIX_HPP

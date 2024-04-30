@@ -5,36 +5,38 @@
 
 using namespace algebra;
 
-//Constructor
+//Default Constructor
 template <class T, StorageOrder Order>
 Matrix<T, Order>::Matrix():
-m_size{0}
+m_size{0}, //initialize the size to 0 rows and columns
+m_state{false} //the state of the matrix is initialized to false(uncompressed state)
 {}
 
 template <class T, StorageOrder Order>
 Matrix<T, Order>::Matrix(unsigned int i, unsigned int j)
 {
-    if (Order==StorageOrder::RowWise)
-    {
-        m_size[0]=i;
-        m_size[1]=j;
-    }
+    m_size[0]=i; //number of rows
+    m_size[1]=j; //number of columns
+  
 }
+
 template <class T, StorageOrder Order>
 void
 Matrix<T, Order>::resize(unsigned int i, unsigned int j){
+   // check the state of matrix, and uncompress if it is compressed 
    if(this->is_compressed())
    {
         uncompress();
    }
+   //assign the new value to the number of rows and columns
     m_size[0]=i;
     m_size[1]=j;
 }
+
 template<class T, StorageOrder Order>
 void
 Matrix<T, Order>::uncompress(){
-    if (is_compressed())
-    {
+    if (is_compressed()){
         if (Order==StorageOrder::RowWise){
             unsigned int j=m_inner_index[0];
             for (auto it=m_inner_index.begin(); it!=(m_inner_index.end()-1); ++it){
@@ -43,9 +45,9 @@ Matrix<T, Order>::uncompress(){
                 }
                 ++j;
             }
-        }
-        
+        }    
     }
+    // update the state and clear the vectors of the comprres state for memory saving
     m_state=false;
     m_val.clear();
     m_outer_index.clear();
@@ -60,6 +62,8 @@ Matrix<T, Order>::update_properties()
     m_m=0;
 
     auto it=m_data.rbegin();
+    // number of rows can be found looking at the last element of the map.
+    // the same is true for column-major ordering for the number of columns
     if constexpr(Order==StorageOrder::RowWise){
         m_m=it->first[0]+1;
     }else if constexpr(Order==StorageOrder::ColWise){
@@ -72,16 +76,20 @@ Matrix<T, Order>::update_properties()
 //Compress the matrix
 template <class T, StorageOrder Order>
 void 
-Matrix<T, Order>::compress(std::vector<T>           &val,
+Matrix<T, Order>::compress(std::vector<T>             &val,
                     std::vector<unsigned int> &outer_index,
                     std::vector<unsigned int> &inner_index)
 {
     update_properties();
-    val.reserve(m_nnz); // val has the dimension of the number of non zero elements 
-    outer_index.reserve(m_nnz); //outer_index has the dimension of the number of NON (???? PER ORA LI PRENDE TUTTI, ANCHE ZERO)zero elements
 
-    inner_index.reserve(m_m+1);// inner_index has the dimension of nrows+1 
-    inner_index.emplace_back(0);
+    // val has the dimension of the number of the elements in the map
+    val.reserve(m_nnz); 
+    //outer_index has the dimension of the number of the elements in the map
+    outer_index.reserve(m_nnz); 
+
+    // inner_index has the dimension of nrows+1 or ncols+1
+    inner_index.reserve(m_m+1);
+    inner_index.emplace_back(0);//first element always zero
     unsigned int temp_idx{0}, key_old{0};
     int i, j;
     if constexpr(Order==StorageOrder::RowWise){
@@ -91,14 +99,17 @@ Matrix<T, Order>::compress(std::vector<T>           &val,
         i=0;
         j=1;
     }
+    // traversing the map and fill the vector that represents the matrix in
+    // the compressed state
     for (auto [key, value] : m_data)
     {
-        //std::cout<<"key:" <<key[0]<<" "<<key[1]<<std::endl;
-        //std::cout<<"values:"<<value<<std::endl;
         val.emplace_back(value);
 
-        outer_index.emplace_back(key[i]);
-    
+        //outer index is filled with the column indeces if row-major ordering;
+        // with the row indeces if column-major ordering
+        outer_index.emplace_back(key[i]); 
+
+        //fill the inner_index with the number of elements in a row/column counting until the next row/
         if (key[j]!=key_old)
         {
             inner_index.emplace_back(temp_idx);
@@ -106,15 +117,41 @@ Matrix<T, Order>::compress(std::vector<T>           &val,
         }
 
         temp_idx++;
-        //std::cout<<*inner_index.rbegin()<<std::endl;
     }
-   inner_index.emplace_back(temp_idx);
+inner_index.emplace_back(temp_idx);
    
 m_data.clear(); // clear the map after the compress to avoid waste of memory
+//update the state of the matrix
 m_state=true;
+//update the private variables
 m_val=val;
 m_inner_index=inner_index;
 m_outer_index=outer_index;
+}
+template<class T, StorageOrder Order>
+T
+Matrix<T, Order>::at(unsigned int i, unsigned int j) const{
+    Indices key={i,j};  
+    auto it=m_data.find(key);
+    if(it != m_data.end()){
+        return m_data.at(key); 
+    }else{
+        std::cerr<<"WARNING! Read the matrix."<<std::endl;
+        std::cerr<<"key: [ "<<key[0]<<", "<<key[1]<<" ]"<<std::endl;
+        std::cerr<<"No control on dimenstion: check bounds"<<std::endl;
+        return 0.0;
+    }
+}
+template<class T, StorageOrder Order>
+void
+Matrix<T,Order>::erase(unsigned int i, unsigned int j){
+    Indices key={i,j};  
+    if(!m_state){
+        m_data.erase(key);
+        }else{
+            std::cerr<<"Wartning. Trying to delete an element in compressed state."<<std::endl;
+            std::cerr<<"No changes. Pass to the uncompressed state before."<<std::endl;
+        }
 }
 
 //Overloading streaming operator
