@@ -9,6 +9,7 @@
 #include <ranges>
 #include <sstream>
 #include <fstream>
+#include <complex>
 
 namespace algebra{
     
@@ -165,7 +166,10 @@ namespace algebra{
         std::vector<unsigned int> &outer_index,
         std::vector<unsigned int> &inner_index);
 
-
+        /*void
+        compress(std::vector<std::complex<T>>  &val,
+        std::vector<unsigned int> &outer_index,
+        std::vector<unsigned int> &inner_index);*/
 
 
         /**

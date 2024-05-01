@@ -208,5 +208,106 @@ int main()
   clock_compressed_csc.stop();
   std::cout << "Compressed case(CSC). "<<clock_compressed_csc;
 
+/////////////////////////////////////////////////////////////
+/************************COMPLEX NUMBERS*********************/
+////////////////////////////////////////////////////////////
+//Fill the matrix as before
+  Matrix<std::complex<double>> E;
+  std::complex<double> z1(-1,1),z2(4,4);
+  for (unsigned int i = 0; i < n; ++i)
+    {
+      if (i > 0){
+        E(i,i-1)= z1;
+      }
+      if (i < n - 1){
+        E(i,i+1) = z1;
+      }
+      E(i,i) = z2;
+    }
+  //Read the matrix
+  std::cout<<E.at(0,0)<<std::endl;
+  //Read with the call operato (UNSAFE)
+  std::cout<<E(1,3)<<std::endl;
+  E.erase(1,3); //Erase the element
+  std::cout<<E.at(1,3)<<std::endl;// Read Again
+
+  //Compress the matrix, ROW_MAJOR ordering by default
+  std::vector<std::complex<double>>       val_complex;
+  std::vector<unsigned int> outer_complex,inner_complex;
+
+  E.compress(val_complex, outer_complex, inner_complex);
+  std::cout<<E;
+
+  if(E.is_compressed()){
+    std::cout<<"Complex matrix compressed"<<std::endl;
+  }
+  //Test the product with CSR matrix
+  {
+  std::vector<std::complex<double>> prod_complex;
+  std::vector<std::complex<double>> complex{z1,z2,z1,z2};
+  Timings::Chrono clock_complex;
+  clock_complex.start();
+  prod_complex=E*complex;
+  clock_complex.stop();
+  std::cout<<"The result of the product, with the compressed complex matrix(CSR), is: "<<std::endl;
+  for (auto ite=prod_complex.begin();ite!=prod_complex.end();++ite){
+    std::cout<<*ite<<std::endl;
+  }
+  std::cout << "Compressed case(CSR) with complex matrix. "<<clock_complex;
+  }
+  //Test the uncompression and the product
+  E.uncompress();
+  if(!E.is_compressed()){
+    std::cout<<"Complex matrix uncompressed"<<std::endl;
+  }
+
+  {
+  std::vector<std::complex<double>> prod_complex;
+  std::vector<std::complex<double>> complex{z1,z2,z1,z2};
+  E.resize(4,4);
+  Timings::Chrono clock_complex;
+  clock_complex.start();
+  prod_complex=E*complex;
+  clock_complex.stop();
+
+ 
+  std::cout<<"The result of the product, with the uncompressed complex matrix, is: "<<std::endl;
+  for (auto ite=prod_complex.begin();ite!=prod_complex.end();++ite){
+    std::cout<<*ite<<std::endl;
+  }
+   std::cout << "Uncompressed case with complex matrix. "<<clock_complex;
+  }
+
+  //now CSC compression
+  const StorageOrder complex_ordering=StorageOrder::ColWise;
+  Matrix<std::complex<double>, complex_ordering> F;
+
+  for (unsigned int i = 0; i < n; ++i)
+    {
+      if (i > 0){
+        F(i,i-1)= z1;
+      }
+      if (i < n - 1){
+        F(i,i+1) = z1;
+      }
+      F(i,i) = z2;
+    }
+  std::vector<std::complex<double>>       val_complex_csc;
+  std::vector<unsigned int> outer_complex_csc,inner_complex_csc;
+
+  F.compress(val_complex_csc, outer_complex_csc, inner_complex_csc);
+  {
+  std::vector<std::complex<double>> prod_complex;
+  std::vector<std::complex<double>> complex{z1,z2,z1,z2};
+  Timings::Chrono clock_complex;
+  clock_complex.start();
+  prod_complex=F*complex;
+  clock_complex.stop();
+  std::cout<<"The result of the product, with the compressed complex matrix(CSC), is: "<<std::endl;
+  for (auto ite=prod_complex.begin();ite!=prod_complex.end();++ite){
+    std::cout<<*ite<<std::endl;
+  }
+  std::cout << "Compressed case(CSC) with complex matrix. "<<clock_complex;
+  }
   return 0;
 }

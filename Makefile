@@ -1,7 +1,7 @@
 CXX      ?= g++
 CXXFLAGS ?= -std=c++20
 #the only thing you need to change is the location of json include in your computer
-CPPFLAGS ?= -O3 -Wall -I./include -Wno-conversion-null -Wno-deprecated-declarations 
+CPPFLAGS ?= -O2 -Wall -I./include -Wno-conversion-null -Wno-deprecated-declarations 
 SOURCE_DIR=./src/
 VPATH=$(SOURCE_DIR)
 SRCS=$(join $(dir $(SOURCE_DIR)),$(notdir *.cpp))

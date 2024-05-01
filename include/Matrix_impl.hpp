@@ -128,6 +128,14 @@ m_val=val;
 m_inner_index=inner_index;
 m_outer_index=outer_index;
 }
+/*
+template <class T, StorageOrder Order>
+void 
+Matrix<std::complex<T>, Order>::compress(std::vector<std::complex<T>>      &val,
+                    std::vector<unsigned int> &outer_index,
+                    std::vector<unsigned int> &inner_index)
+{}*/
+
 template<class T, StorageOrder Order>
 T
 Matrix<T, Order>::at(unsigned int i, unsigned int j) const{
