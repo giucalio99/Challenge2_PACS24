@@ -10,7 +10,10 @@
 #include <sstream>
 #include <fstream>
 #include <complex>
-
+/**
+ * @brief namespace containing the ordering and the class Matrix
+ * 
+ */
 namespace algebra{
     
     /**
@@ -221,7 +224,16 @@ namespace algebra{
         T&
         operator()(const unsigned int k, const unsigned int z);
 
-        //Streaming operator overloading
+        
+        /**
+         * @brief Streaming operator overloading
+         * 
+         * @tparam U 
+         * @tparam order 
+         * @param out output stream 
+         * @param A Matrix object
+         * @return std::ostream& 
+         */
         template<class U, StorageOrder order>
         friend std::ostream& 
         operator<<(std::ostream& out, const Matrix<U, order>& A);
