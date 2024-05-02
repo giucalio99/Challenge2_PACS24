@@ -1,6 +1,7 @@
 # Challenge2_PACS24_10582530
 ## Configuration
-The makefile is already working and no changes are require.
+The makefile does not require any changes.
+
 ## Building
 In order to compile type:
 
@@ -26,7 +27,7 @@ You will learn how:
 4. Read the valuee and performed the Matrix-vector operation in the compressed state;
 5. Read a matrix in Matrix Market format;
 6. Evaluate and compare the performance of operation on the matrix while in different states (compressed or not);
-7. Play with a matrix of complex numbers;
+7. Play with a matrix of complex numbers.
 
 
 ## Documetation
@@ -36,4 +37,5 @@ In the doc folder a doxyfile is present. Type:
 doxygen
 ```
 
-to have the doxygenated documantation
+to have the doxygenated documantation.
+
