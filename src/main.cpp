@@ -43,7 +43,6 @@ int main()
 
       A(i,i) = 4;
     }
-    
     //I can print the matrix
     std::cout<<A;
     //I can modify an existing element with the call operator. 
@@ -51,12 +50,11 @@ int main()
     A(0,0)=12;
 
     //It is possible to read the matrix with the call operator but it is UNSAFE
-    std::cout<<"["<<0<<" ,"<<0<<"]"<<std::endl;
-    std::cout<<"value: "<<A(0,0)<<std::endl;
-    //indeef if the element is not present, a 0 will be added to the map.
+    std::cout<<"Value in (0,0): "<<A(0,0)<<std::endl;
+    //indeed if the element is not present, a 0 will be added to the map.
     // to read the matrix, if you are not sure if the key is present or not
     // prefer the at() method.
-    std::cout<<A(1,3)<<std::endl; // a zero will be added in the map and stored (undesired)
+    std::cout<<"Value in (1,3): "<<A(1,3)<<std::endl; // a zero will be added in the map and stored (undesired)
     
     A.erase(1,3); // I can remove an element if the matrix is uncompressed
     //If compressed erase will have no effect and a warning will be printed
@@ -69,7 +67,8 @@ int main()
     std::cout<<A.at(1,3)<<std::endl;
     //if key is (100, 100) (outside the bounds of a 4*4 matrix) I still have:
     std::cout<<A.at(100,100)<<std::endl;
-    
+    //If the matrix is compressed this call would cause a segmentation fault.
+
     //NOTE: if a zero is inserted no checks are made. Be careful!
 
     //now I will compress the matrix
@@ -78,6 +77,32 @@ int main()
 
     
   A.compress(val, col_ind, row_ptr);
+  // If the matrix is compressed I can read it with the at method
+  // I can try to read also with the call operato but it is unsafe.
+  // If the key is present all works fine, if not the call will cause an abort
+  //to avoid a modification of the map in compressed state. 
+  //In this state only non-zero entries can be modified
+
+  
+
+
+  //std::cout<<"Attempt: "<<A(10,70)<<std::endl; // In compressed state a key
+  //greater than the matrix will cause a segmentation fault. Be careful.
+  std::cout<<"Reading with call operator:" <<A(1,3)<<std::endl;
+  std::cout<<"Reading with at method:" <<A.at(1,3)<<std::endl;//prefer at()
+  A(1,3)=5;//This call will have no effect
+  //indeed E(1,3) will be 0+i0;
+  std::cout<<"A(1,3) is still: "<<A(1,3)<<std::endl;
+  A(0,0)=5; //OK, the element will be modified
+  std::cout<<"New value of A(0,0): "<<A(0,0)<<std::endl;
+   std::cout<<"New value of A(0,0): "<<A.at(0,0)<<std::endl;
+  A(0,0)=4; // back to the previous value
+  std::cout<<"New value of A(0,0): "<<A(0,0)<<std::endl;
+  std::cout<<"New value of A(0,0): "<<A.at(0,0)<<std::endl;
+
+  //With the previous call we have modified the private variables of the matrix.
+  //call the update method to update val
+  A.update_compressed_values(val);
   std::cout << "CSR vectors:" << std::endl;
   for (auto i : val)
     std::cout << i << " ";
@@ -119,6 +144,8 @@ int main()
 
     
   A.compress(val2, col_ind2, row_ptr2);
+  A(0,0)=4;
+  A.update_compressed_values(val2);
 
   std::vector<double> b{3.0,4.0,2.0,7.0};
   std::vector<double> prod=A*b;
@@ -225,10 +252,11 @@ int main()
       E(i,i) = z2;
     }
   //Read the matrix
-  std::cout<<E.at(0,0)<<std::endl;
+  std::cout<<"E(0,0)= "<<E.at(0,0)<<std::endl;
   //Read with the call operato (UNSAFE)
-  std::cout<<E(1,3)<<std::endl;
+  std::cout<<"Read with call operator matrix E="<<E(1,3)<<std::endl;
   E.erase(1,3); //Erase the element
+  std::cout<<"Read with at() method matrix E "<<std::endl;
   std::cout<<E.at(1,3)<<std::endl;// Read Again
 
   //Compress the matrix, ROW_MAJOR ordering by default
@@ -236,8 +264,14 @@ int main()
   std::vector<unsigned int> outer_complex,inner_complex;
 
   E.compress(val_complex, outer_complex, inner_complex);
-  std::cout<<E;
-
+  std::cout<<"Complex matrix E:"<<std::endl;
+  std::cout<<E<<std::endl;
+  
+  //Read again when it is compressed
+  std::cout<<"Read with call operator matrix E "<<std::endl;
+  std::cout<<E(1,3)<<std::endl;
+  std::cout<<"Read with at() method matrix E "<<std::endl;
+  std::cout<<E.at(1,3)<<std::endl;// Read Again
   if(E.is_compressed()){
     std::cout<<"Complex matrix compressed"<<std::endl;
   }

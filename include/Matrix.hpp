@@ -75,6 +75,7 @@ namespace algebra{
     class Matrix {
         
         private:
+        T m_dummy_value;
         //map that stores the values accordingly to the StorageOrder
         ElemType<T, Order> m_data; 
         
@@ -107,6 +108,15 @@ namespace algebra{
         std::vector<unsigned int> m_outer_index;
         std::vector<unsigned int> m_inner_index;
 
+        // utility to update some private variables of the class
+        void 
+        update_properties();
+
+        T
+        get_zero();
+
+        T&
+        read_compressed_matrix(const Indices& key);
         public:
         //The default constructor
         Matrix();
@@ -141,12 +151,8 @@ namespace algebra{
         void 
         resize(unsigned int i, unsigned int j);
 
-        // utility to update some private variables of the class
-        void 
-        update_properties();
-        
-
-
+        void
+        update_compressed_values(std::vector<T>   &val);
         /**
          * @brief The metod allows to uncompress a matrix from CSR/CSC to COOmap format
          * 
@@ -179,7 +185,7 @@ namespace algebra{
          * @param j column index
          * @return const T read value
          */
-        T at(unsigned int i, unsigned int j) const;
+        T at(unsigned int i, unsigned int j) ;
 
         /**
          * @brief delete an element previously inserted
@@ -200,21 +206,9 @@ namespace algebra{
          * @param j index of the columns
          * @return T& value to be inserted
          */
-        inline T& operator()(unsigned int i, unsigned int j){
-
-            Indices key={i,j}; 
-            auto it=m_data.find(key);
-            if(it != m_data.end()){//true if the key is already present
-                std::cerr<<"\n Warning: Matrix is uncompressed: modyfing existing element."<<std::endl;
-               return m_data[key];
-            }else{ //if the key is not present
-                if(!m_state){
-                    return m_data[key];
-                }else{
-                    std::cerr<<"Warning:trying to add an element in compressed state. Aborting."<<std::endl;
-                }
-            }
-        }
+        
+        T&
+        operator()(const unsigned int k, const unsigned int z);
 
         //Streaming operator overloading
         template<class U, StorageOrder order>

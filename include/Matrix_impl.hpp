@@ -9,7 +9,7 @@ using namespace algebra;
 template <class T, StorageOrder Order>
 Matrix<T, Order>::Matrix():
 m_size{0}, //initialize the size to 0 rows and columns
-m_state{false} //the state of the matrix is initialized to false(uncompressed state)
+m_state{false}//the state of the matrix is initialized to false(uncompressed state)
 {}
 
 template <class T, StorageOrder Order>
@@ -17,6 +17,8 @@ Matrix<T, Order>::Matrix(unsigned int i, unsigned int j)
 {
     m_size[0]=i; //number of rows
     m_size[1]=j; //number of columns
+    m_size={0,0};
+    m_state=false;
   
 }
 
@@ -73,6 +75,43 @@ Matrix<T, Order>::update_properties()
 
    
 }
+template <class T, StorageOrder Order>
+T
+Matrix<T, Order>::get_zero()
+{
+    static T zeroValue;
+    return zeroValue;
+}
+template <class T, StorageOrder Order>
+T&
+Matrix<T, Order>::read_compressed_matrix(const Indices& key){
+    int i, j;
+    if constexpr(Order==StorageOrder::RowWise){
+        i=0;
+        j=1;
+    }else if constexpr(Order==StorageOrder::ColWise){
+        i=1;
+        j=0;
+    }
+    auto it=std::find(m_outer_index.begin()+m_inner_index[key[i]], 
+                     m_outer_index.begin()+m_inner_index[key[i]+1], key[j]);
+    if(it != m_outer_index.begin() +m_inner_index[key[i]+1]){//true if the element is present
+        std::size_t index=it-m_outer_index.begin();
+
+        return m_val[index];
+    }else{
+        std::cerr<<"Warning:Matrix is compressed: reading only"<<std::endl;
+        m_dummy_value=get_zero();
+        return m_dummy_value;
+    }      
+
+}
+template<class T, StorageOrder Order>
+void
+Matrix<T, Order>::update_compressed_values(std::vector<T>    &val)
+{
+    val=m_val;
+}
 //Compress the matrix
 template <class T, StorageOrder Order>
 void 
@@ -128,28 +167,25 @@ m_val=val;
 m_inner_index=inner_index;
 m_outer_index=outer_index;
 }
-/*
-template <class T, StorageOrder Order>
-void 
-Matrix<std::complex<T>, Order>::compress(std::vector<std::complex<T>>      &val,
-                    std::vector<unsigned int> &outer_index,
-                    std::vector<unsigned int> &inner_index)
-{}*/
+
 
 template<class T, StorageOrder Order>
 T
-Matrix<T, Order>::at(unsigned int i, unsigned int j) const{
+Matrix<T, Order>::at(unsigned int i, unsigned int j) {
     Indices key={i,j};  
-    auto it=m_data.find(key);
-    if(it != m_data.end()){
-        return m_data.at(key); 
-    }else{
-        std::cerr<<"WARNING! Read the matrix."<<std::endl;
-        std::cerr<<"No control on dimenstion: check bounds"<<std::endl;
-        std::cerr<<"key: [ "<<key[0]<<", "<<key[1]<<" ]"<<std::endl;
-        std::cerr<<"Value: ";
-        
+    if (!m_state){
+        auto it=m_data.find(key);
+        if(it != m_data.end()){
+            return m_data.at(key); 
+        }else{
+            std::cerr<<"WARNING! No control on dimenstion: check bounds."<<std::endl;
+            std::cerr<<"key: [ "<<key[0]<<", "<<key[1]<<" ]"<<std::endl;
+            std::cerr<<"Value: ";
         return 0.0;
+        }
+    }else{
+        
+        return read_compressed_matrix(key);
     }
 }
 template<class T, StorageOrder Order>
@@ -191,7 +227,27 @@ bool Matrix<T, Order>::read_market_matrix(const std::string& filename){
     file.close();
     return true;
 }
+template<class T, StorageOrder Order>
+T&
+Matrix<T, Order>::operator()(const unsigned int k, const unsigned int z){
+     Indices key={k,z};  
 
+            if(!m_state){
+                auto it=m_data.find(key); 
+                if(it != m_data.end()){//true if the key is already present
+                    std::cerr<<"\n Warning: modyfing existing element."<<std::endl;
+                    return m_data[key];
+                }else{//if the key is not present
+                //I add the element in the uncompressed state
+                return m_data[key];
+                }
+             
+            }else{
+                
+                return read_compressed_matrix(key);
+            }                
+               
+}
 //Overloading streaming operator
 template <class T, StorageOrder Order>
 std::ostream& operator<<(std::ostream& out, const Matrix<T, Order>& A)
@@ -222,15 +278,6 @@ std::ostream& operator<<(std::ostream& out, const Matrix<T, Order>& A)
 //Overload operator* for Matrix-vector multiplication
 template<class T, StorageOrder Order>
 std::vector<T> operator*(const Matrix<T, Order> &A, const std::vector<T> &b){
-
-    //std::vector<T> val, outer_index, inner_index;
-    //if(!A.is_compressed()){
-      //  std::cerr<<"Please compress the matrix "
-        //A.compress(val, outer_index, inner_index);
-    //}
-    //else{
-        //A.update_properties();
-    //}
 
     std::vector<T> output;
     if(A.m_state){

@@ -1,15 +1,14 @@
 CXX      ?= g++
 CXXFLAGS ?= -std=c++20
-#the only thing you need to change is the location of json include in your computer
 CPPFLAGS ?= -O2 -Wall -I./include -Wno-conversion-null -Wno-deprecated-declarations 
-SOURCE_DIR=./src/
+SOURCE_DIR=./src/ #set the location of source file
 VPATH=$(SOURCE_DIR)
-SRCS=$(join $(dir $(SOURCE_DIR)),$(notdir *.cpp))
-OBJS= $(SRCS:%.cpp=%.o)
+SRCS=$(join $(dir $(SOURCE_DIR)),$(notdir *.cpp)) #source files
+OBJS= $(SRCS:%.cpp=%.o) #object files
 
-EXEC= main
+EXEC= main #I want one executable called "main"
 .phony= clean 
-.DEFAULT_GOAL = all
+.DEFAULT_GOAL = all 
 all: $(EXEC)
 
 $(OBJS): $(SRCS) 
