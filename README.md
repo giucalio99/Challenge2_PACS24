@@ -3,9 +3,9 @@
 The makefile is already working and no changes are require.
 ## Building
 In order to compile type:
-'''
+```
 make
-'''
+```
 or
 make all
 
