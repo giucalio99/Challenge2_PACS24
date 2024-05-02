@@ -3,14 +3,20 @@
 The makefile is already working and no changes are require.
 ## Building
 In order to compile type:
-'''
-make
-'''
-or
-make all
 
-To clean the directory type
+```
+make
+```
+or
+
+```
+make all
+```
+
+To clean the directory type:
+```
 make clean
+```
 ## Execution
 A lot of example of the usage of the class Matrix has been shown in the main program. 
 You will learn how:
@@ -24,6 +30,10 @@ You will learn how:
 
 
 ## Documetation
-In the doc folder a doxyfile is present. Type
+In the doc folder a doxyfile is present. Type:
+
+```
 doxygen
+```
+
 to have the doxygenated documantation
