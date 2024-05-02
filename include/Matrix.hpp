@@ -112,9 +112,15 @@ namespace algebra{
         void 
         update_properties();
 
+        /**
+         * @brief Get the zero object
+         * 
+         * @return T 
+         */
         T
         get_zero();
 
+        //method to read the value when the matrix is compressed, given a key 
         T&
         read_compressed_matrix(const Indices& key);
         public:
@@ -151,6 +157,11 @@ namespace algebra{
         void 
         resize(unsigned int i, unsigned int j);
 
+        /**
+         * @brief useful method for update the vector of values when one of them has been modified
+         * 
+         * @param val vector of values
+         */
         void
         update_compressed_values(std::vector<T>   &val);
         /**
@@ -172,12 +183,6 @@ namespace algebra{
         std::vector<unsigned int> &outer_index,
         std::vector<unsigned int> &inner_index);
 
-        /*void
-        compress(std::vector<std::complex<T>>  &val,
-        std::vector<unsigned int> &outer_index,
-        std::vector<unsigned int> &inner_index);*/
-
-
         /**
          * @brief method to read the matrix provided a specific key
          * 
@@ -196,7 +201,13 @@ namespace algebra{
         void 
         erase(unsigned int i, unsigned int j);
 
-        
+        /**
+         * @brief This method read a matrix in Matrix Market format (.mtx)
+         * 
+         * @param filename 
+         * @return true if the file has been read successfully
+         * @return false if the reading has failed
+         */
         bool
         read_market_matrix(const std::string& filename);
         /**
@@ -228,23 +239,11 @@ namespace algebra{
         friend std::vector<U> 
         operator*(const Matrix<U, order> &A,const std::vector<U> &b);
 
-        /*
-        template<class U,algebra::StorageOrder order>
-        struct std::less<algebra::ElemType<U>>{
-        bool operator()(algebra::ElemType<U> &lhs, algebra::ElemType<U> &rhs){
-        bool comp;
-        // lhs<rhs
-        if (order==algebra::StorageOrder::ColWise){
-            comp=(lhs.first[1] < rhs.first[1]) || (lhs.first[1] == rhs.first[1] && lhs.first[0] < rhs.first[0])
-        }else{
-            comp=std::lexicographical_compare(lhs,rhs);
-        }
-        return comp;*/
+
     };
 
 // include the implementation
 #include "Matrix_impl.hpp"
-//extern template std::ostream& operator<<(std::ostream& out, const Matrix<double, StorageOrder::RowWise>& A);
 }// namespace algebra
 
 

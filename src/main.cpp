@@ -46,16 +46,16 @@ int main()
     //I can print the matrix
     std::cout<<A;
     //I can modify an existing element with the call operator. 
-    //A warning will be printed
     A(0,0)=12;
-
+    double valore1=A(0,0);
+    double valore=A.at(0,0);
     //It is possible to read the matrix with the call operator but it is UNSAFE
-    std::cout<<"Value in (0,0): "<<A(0,0)<<std::endl;
+    std::cout<<"Value in (0,0): "<<valore1<<std::endl;
+    std::cout<<"Value in (0,0): "<<valore<<std::endl;
     //indeed if the element is not present, a 0 will be added to the map.
     // to read the matrix, if you are not sure if the key is present or not
     // prefer the at() method.
     std::cout<<"Value in (1,3): "<<A(1,3)<<std::endl; // a zero will be added in the map and stored (undesired)
-    
     A.erase(1,3); // I can remove an element if the matrix is uncompressed
     //If compressed erase will have no effect and a warning will be printed
     
@@ -88,8 +88,8 @@ int main()
 
   //std::cout<<"Attempt: "<<A(10,70)<<std::endl; // In compressed state a key
   //greater than the matrix will cause a segmentation fault. Be careful.
-  std::cout<<"Reading with call operator:" <<A(1,3)<<std::endl;
-  std::cout<<"Reading with at method:" <<A.at(1,3)<<std::endl;//prefer at()
+  std::cout<<"Reading with call operator: A(1,3):" <<A(1,3)<<std::endl;
+  std::cout<<"Reading with at method: A(1,3): " <<A.at(1,3)<<std::endl;//prefer at()
   A(1,3)=5;//This call will have no effect
   //indeed E(1,3) will be 0+i0;
   std::cout<<"A(1,3) is still: "<<A(1,3)<<std::endl;
@@ -99,7 +99,9 @@ int main()
   A(0,0)=4; // back to the previous value
   std::cout<<"New value of A(0,0): "<<A(0,0)<<std::endl;
   std::cout<<"New value of A(0,0): "<<A.at(0,0)<<std::endl;
-
+  
+  A.erase(0,0); //WARNING: operation has no effect. I cannot eliminate and element from
+  // a compressed matrix
   //With the previous call we have modified the private variables of the matrix.
   //call the update method to update val
   A.update_compressed_values(val);

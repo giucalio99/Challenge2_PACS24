@@ -100,8 +100,8 @@ Matrix<T, Order>::read_compressed_matrix(const Indices& key){
 
         return m_val[index];
     }else{
-        std::cerr<<"Warning:Matrix is compressed: reading only"<<std::endl;
-        m_dummy_value=get_zero();
+        //std::cerr<<"Warning:Matrix is compressed: reading only"<<std::endl;
+        m_dummy_value=get_zero();//if the element is not present I will return 0
         return m_dummy_value;
     }      
 
@@ -110,7 +110,8 @@ template<class T, StorageOrder Order>
 void
 Matrix<T, Order>::update_compressed_values(std::vector<T>    &val)
 {
-    val=m_val;
+    val=m_val;//update val after a change of m_val.
+    //This chenge can appen because modification of non zero elements are allowed with operator()
 }
 //Compress the matrix
 template <class T, StorageOrder Order>
@@ -178,7 +179,7 @@ Matrix<T, Order>::at(unsigned int i, unsigned int j) {
         if(it != m_data.end()){
             return m_data.at(key); 
         }else{
-            std::cerr<<"WARNING! No control on dimenstion: check bounds."<<std::endl;
+            std::cerr<<"WARNING! Check bounds: no control on the size of the matrix is made."<<std::endl;
             std::cerr<<"key: [ "<<key[0]<<", "<<key[1]<<" ]"<<std::endl;
             std::cerr<<"Value: ";
         return 0.0;
@@ -188,6 +189,7 @@ Matrix<T, Order>::at(unsigned int i, unsigned int j) {
         return read_compressed_matrix(key);
     }
 }
+
 template<class T, StorageOrder Order>
 void
 Matrix<T,Order>::erase(unsigned int i, unsigned int j){
@@ -235,7 +237,6 @@ Matrix<T, Order>::operator()(const unsigned int k, const unsigned int z){
             if(!m_state){
                 auto it=m_data.find(key); 
                 if(it != m_data.end()){//true if the key is already present
-                    std::cerr<<"\n Warning: modyfing existing element."<<std::endl;
                     return m_data[key];
                 }else{//if the key is not present
                 //I add the element in the uncompressed state
@@ -248,6 +249,7 @@ Matrix<T, Order>::operator()(const unsigned int k, const unsigned int z){
             }                
                
 }
+
 //Overloading streaming operator
 template <class T, StorageOrder Order>
 std::ostream& operator<<(std::ostream& out, const Matrix<T, Order>& A)
