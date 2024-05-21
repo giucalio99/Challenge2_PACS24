@@ -1,0 +1,11 @@
+Checklist:
+  - sparse_matrix constructor:   OKAY
+  - comparison operator:         OKAY
+  - compress:                    OKAY
+  - uncompress:                  OKAY
+  - data is properly cleared:    OKAY
+  - call to non-const / const assignment operator: OKAY
+  - resize method:               OKAY
+  - operator*:                   OKAY
+  - reading from file:           OKAY
+
